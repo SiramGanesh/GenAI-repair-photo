@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/how-it-works": {
+      "targetKind": "new-page",
+      "projectId": "9f37ff7b-b2d0-4035-82fc-6789e5427142",
+      "sourceTarget": "/",
+      "sourceDraftId": "909183a3-fb1d-4beb-8a7c-d765190a923b",
+      "activeDraftId": "9b88d509-9977-4158-b732-9acd70de08f7",
+      "designSystemPath": ".superdesign/design-system.md",
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "frontend/src/App.jsx",
+        "frontend/src/components/Navigation.jsx",
+        "frontend/src/components/Footer.jsx",
+        "frontend/src/pages/HomePage.jsx",
+        "frontend/src/styles.css"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "7b5a9b35965d3245954a4e4d1566d04d99c6f4dbb68bcd384a9a858b771985d2",
+        "frontend/src/App.jsx": "f6024412c17bf7f6a59b7651c557da6819cf5977132d1ac27179537e2a4530c6",
+        "frontend/src/components/Navigation.jsx": "e180ac2be7a69428f178d42469c29b6b2f990300548fef12951413908835c3c3",
+        "frontend/src/components/Footer.jsx": "2b1d13e2434624d708bc9e03bc995c4ed405fa8f68fcd1db4d2e4f6451fdc904",
+        "frontend/src/pages/HomePage.jsx": "c1a0e734085b278223a6a8bdcb19a470348151bd6cb8fc2602becb01bb501835",
+        "frontend/src/styles.css": "c3f548387175ba86f486858742b93de3e3c31592ad5de077b59eb7f83ddc6dda"
+      },
+      "components": [
+        {
+          "name": "Footer",
+          "id": "a234aa97-e885-4a3e-834d-7ab4d0ca896b",
+          "sourcePath": "frontend/src/components/Footer.jsx"
+        }
+      ],
+      "drafts": {
+        "9b88d509-9977-4158-b732-9acd70de08f7": {
+          "title": "How Revive Works - Factual Process Overview",
+          "visualDirection": "Warm editorial Revive brand, matching existing landing page",
+          "parentDraftId": null,
+          "currentVersion": 8
+        },
+        "909183a3-fb1d-4beb-8a7c-d765190a923b": {
+          "title": "Revive - AI Image Restoration",
+          "currentVersion": 7
+        },
+        "61995580-b8d0-40d8-b1e0-59adbf16ccd7": {
+          "title": "Revive - Premium Pricing Plans",
+          "currentVersion": 4
+        },
+        "a087f81e-061e-42d7-84fc-2af998851eb7": {
+          "title": "Revive Before/After Gallery",
+          "currentVersion": 4
+        }
+      },
+      "updatedAt": "2026-11-14T20:05:00+05:30"
+    }
+  }
+}
