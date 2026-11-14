@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="footer-inner">
-        <Link className="brand footer-brand" to="/" viewTransition>
+        <Link className="brand footer-brand" to="/restore" viewTransition>
           <span className="brand-mark">
             <Sparkles size={18} aria-hidden="true" />
           </span>

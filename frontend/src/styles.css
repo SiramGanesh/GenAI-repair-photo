@@ -37,12 +37,12 @@ main { view-transition-name: route-content; }
 @keyframes route-fade-in { from { opacity: 0; } }
 
 .site-header { height: 76px; position: sticky; inset: 0 0 auto; z-index: 20; background: rgb(252 249 247 / 92%); border-bottom: 1px solid rgb(238 229 223 / 85%); backdrop-filter: blur(16px); }
-.nav-wrap { width: min(1280px, calc(100% - 48px)); height: 100%; margin: auto; display: flex; align-items: center; justify-content: space-between; }
+.nav-wrap { position: relative; width: min(1280px, calc(100% - 48px)); height: 100%; margin: auto; display: flex; align-items: center; justify-content: space-between; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -.06em; }
 .brand-mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; color: white; background: var(--primary); }
 .nav-content, .nav-links, .nav-actions { display: flex; align-items: center; }
 .nav-content { gap: clamp(30px, 6vw, 82px); }
-.nav-links { gap: 34px; color: #625c58; font-size: 13px; font-weight: 600; }
+.nav-links { position: absolute; left: 50%; gap: 34px; color: #625c58; font-size: 13px; font-weight: 600; transform: translateX(-50%); }
 .nav-links a { transition: color .2s ease; }
 .nav-links a:hover, .nav-links a.active { color: var(--primary); }
 .nav-actions { gap: 14px; }
@@ -138,6 +138,13 @@ main { view-transition-name: route-content; }
 .page-heading .eyebrow, .gallery-heading .eyebrow { margin-bottom: 14px; }
 .page-heading h1, .gallery-heading h1 { max-width: 800px; margin: 0 auto 15px; font-size: clamp(43px, 5vw, 60px); }
 .page-heading > p, .gallery-heading > .page-shell > p { max-width: 630px; margin: 0 auto; color: var(--muted); font-size: 14px; line-height: 1.75; }
+.how-process { padding-bottom: 58px; }
+.process-card { min-height: 250px; }
+.process-card h2 { margin-bottom: 9px; font-size: 17px; }
+.process-card p { max-width: 320px; }
+.how-note { display: flex; align-items: flex-start; justify-content: center; gap: 9px; max-width: 760px; margin: 27px auto 0; color: var(--muted); font-size: 11px; line-height: 1.8; text-align: center; }
+.how-note svg { flex: 0 0 auto; margin-top: 2px; color: var(--primary); }
+.how-cta { background: #282220; }
 .billing-switch { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 26px; color: #817973; font-size: 12px; font-weight: 600; }
 .billing-switch small { margin-left: 4px; color: var(--primary); font-size: 10px; }
 .billing-active { color: var(--ink); }
@@ -216,7 +223,7 @@ main { view-transition-name: route-content; }
   .menu-toggle { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); }
   .nav-content { position: absolute; top: 65px; right: 0; left: 0; display: none; align-items: stretch; gap: 20px; padding: 20px 20px 24px; border-bottom: 1px solid var(--line); background: var(--paper); box-shadow: 0 15px 25px rgb(45 30 20 / 8%); }
   .nav-content.is-open { display: flex; flex-direction: column; }
-  .nav-links { align-items: stretch; flex-direction: column; gap: 0; }
+  .nav-links { position: static; align-items: stretch; flex-direction: column; gap: 0; transform: none; }
   .nav-links a { padding: 12px 5px; }
   .nav-actions { justify-content: space-between; }
   .hero { grid-template-columns: 1fr; gap: 38px; padding-block: 51px 70px; }

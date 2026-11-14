@@ -6,11 +6,15 @@ export default function Navigation() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
+  const handleRestoreClick = () => {
+    closeMenu();
+    window.scrollTo(0, 0);
+  };
 
   return (
     <header className="site-header">
       <nav className="nav-wrap" aria-label="Main navigation">
-        <Link className="brand" to="/" onClick={closeMenu} aria-label="Revive home" viewTransition>
+        <Link className="brand" to="/restore" onClick={closeMenu} aria-label="Revive home" viewTransition>
           <span className="brand-mark">
             <Sparkles size={20} aria-hidden="true" />
           </span>
@@ -29,9 +33,23 @@ export default function Navigation() {
 
         <div className={`nav-content${menuOpen ? " is-open" : ""}`}>
           <div className="nav-links">
-            <a href="/#how-it-works" onClick={closeMenu}>
+            <NavLink
+              className={({ isActive }) => (isActive ? "active" : "")}
+              end
+              onClick={handleRestoreClick}
+              to="/restore"
+              viewTransition
+            >
+              Restore
+            </NavLink>
+            <NavLink
+              className={({ isActive }) => (isActive ? "active" : "")}
+              onClick={closeMenu}
+              to="/how-it-works"
+              viewTransition
+            >
               How it works
-            </a>
+            </NavLink>
             <NavLink
               className={({ isActive }) => (isActive ? "active" : "")}
               onClick={closeMenu}
@@ -58,9 +76,9 @@ export default function Navigation() {
             >
               Log in
             </button>
-            <a className="button button-primary nav-cta" href="/#restore" onClick={closeMenu}>
+            <Link className="button button-primary nav-cta" to="/restore#restore" onClick={closeMenu} viewTransition>
               Start restoring
-            </a>
+            </Link>
           </div>
         </div>
       </nav>

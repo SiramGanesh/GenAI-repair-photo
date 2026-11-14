@@ -84,7 +84,7 @@ export default function GalleryPage() {
         <span className="eyebrow eyebrow-light">Your memories, next</span>
         <h2>Ready to make a little more room for the past?</h2>
         <p>Photo upload will be available when the restoration service is connected.</p>
-        <Link className="button button-light" to="/#restore" viewTransition>
+        <Link className="button button-light" to="/restore#restore" viewTransition>
           Explore Revive <ArrowRight size={16} aria-hidden="true" />
         </Link>
       </section>

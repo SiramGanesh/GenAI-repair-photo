@@ -55,7 +55,7 @@ Uploads are validated and processed for each request; the application does not p
 
 ## Pages
 
-- `/` — restoration tool and model information.
+- `/restore` — restoration tool and model information (default page). `/` redirects here.
 - `/pricing` — illustrative, non-purchasable plan preview.
 - `/showcase` — sample photos with illustrative comparison sliders and category filters.
 

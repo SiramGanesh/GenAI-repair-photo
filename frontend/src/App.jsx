@@ -1,14 +1,14 @@
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from "./components/Footer.jsx";
 import Navigation from "./components/Navigation.jsx";
 import GalleryPage from "./pages/GalleryPage.jsx";
+import HowItWorksPage from "./pages/HowItWorksPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import PricingPage from "./pages/PricingPage.jsx";
-import { Link } from "react-router-dom";
 
 function ScrollToHash() {
-  const { hash, pathname } = useLocation();
+  const { hash } = useLocation();
 
   useEffect(() => {
     if (!hash) {
@@ -18,7 +18,7 @@ function ScrollToHash() {
 
     const target = document.getElementById(decodeURIComponent(hash.slice(1)));
     target?.scrollIntoView();
-  }, [hash, pathname]);
+  }, [hash]);
 
   return null;
 }
@@ -28,8 +28,8 @@ function NotFoundPage() {
     <main className="not-found page-shell">
       <span className="eyebrow">Lost in the album?</span>
       <h1>We couldn't find that page.</h1>
-      <Link className="button button-primary" to="/" viewTransition>
-        Back to Revive
+      <Link className="button button-primary" to="/restore" viewTransition>
+        Back to Restore
       </Link>
     </main>
   );
@@ -41,7 +41,9 @@ export default function App() {
       <ScrollToHash />
       <Navigation />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<Navigate replace to="/restore" />} />
+        <Route path="/restore" element={<HomePage />} />
+        <Route path="/how-it-works" element={<HowItWorksPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/showcase" element={<GalleryPage />} />
         <Route path="*" element={<NotFoundPage />} />

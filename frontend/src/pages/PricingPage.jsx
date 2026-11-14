@@ -109,7 +109,7 @@ export default function PricingPage() {
                 </ul>
                 <Link
                   className={`button ${plan.popular ? "button-primary" : "button-secondary"}`}
-                  to="/#restore"
+                  to="/restore#restore"
                   viewTransition
                 >
                   {plan.name === "Studio" ? "Contact sales" : "Get started"}
@@ -152,7 +152,7 @@ export default function PricingPage() {
         <span className="eyebrow eyebrow-light">Not sure where to start?</span>
         <h2>Start with a story, not a subscription.</h2>
         <p>Pricing is only a preview. Try the 4× photo upscaler without a subscription.</p>
-        <Link className="button button-light" to="/#restore" viewTransition>Try photo upscaling</Link>
+        <Link className="button button-light" to="/restore#restore" viewTransition>Try photo upscaling</Link>
       </section>
     </main>
   );
