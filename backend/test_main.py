@@ -1,5 +1,6 @@
 import asyncio
 import io
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from httpx import ASGITransport, AsyncClient
@@ -12,6 +13,26 @@ class FakeRestorer:
     def predict(self, image, batch_size):
         assert batch_size == 1
         return image.resize((image.width * 4, image.height * 4))
+
+
+class FakeModel:
+    def register_forward_hook(self, callback):
+        self.callback = callback
+        return SimpleNamespace(remove=lambda: None)
+
+    def finish_patch(self):
+        self.callback(self, (SimpleNamespace(shape=(1,)),), None)
+
+
+class ProgressRestorer:
+    def __init__(self):
+        self.model = FakeModel()
+
+    def predict(self, image, batch_size):
+        assert batch_size == 1
+        for _ in range(4):
+            self.model.finish_patch()
+        return image
 
 
 def image_bytes(image_format="PNG", size=(20, 10)):
@@ -44,6 +65,40 @@ def test_health_reports_loaded_model():
         "scale": 4,
         "device": "cpu",
     }
+
+
+def test_predict_reports_completed_model_patches():
+    restorer = ProgressRestorer()
+    progress = []
+
+    result = main.predict_with_progress(
+        restorer,
+        Image.new("RGB", (256, 256)),
+        batch_size=1,
+        on_progress=lambda completed, total: progress.append((completed, total)),
+    )
+
+    assert result.size == (256, 256)
+    assert progress == [(1, 4), (2, 4), (3, 4), (4, 4)]
+
+
+def test_restore_progress_reports_active_request():
+    request_id = "8f0c67f6-91f7-4e16-b9f0-e9ac38e5161a"
+
+    async def send_request():
+        with patch.object(main, "load_restorer", return_value=(FakeRestorer(), "cpu")):
+            async with main.lifespan(main.app):
+                main.app.state.restoration_progress[request_id] = 37
+                async with AsyncClient(
+                    transport=ASGITransport(app=main.app),
+                    base_url="http://test",
+                ) as client:
+                    return await client.get(f"/api/restore/progress/{request_id}")
+
+    response = asyncio.run(send_request())
+
+    assert response.status_code == 200
+    assert response.json() == {"progress": 37}
 
 
 def test_restore_returns_four_times_webp():

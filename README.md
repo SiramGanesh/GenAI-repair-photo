@@ -9,6 +9,7 @@ The model performs super-resolution and can reduce common image artifacts; it do
 - Node.js 18 or newer.
 - Python 3.11–3.13 recommended.
 - A CUDA-capable GPU is recommended. CPU inference is supported but can be slow.
+- On CPU, full-resolution restoration can take several minutes, especially for large images. For practical processing times, run the backend with a CUDA-enabled PyTorch build and GPU.
 - The initial backend startup downloads the model checkpoint (approximately 68 MB) from the pinned Hugging Face model revision.
 
 ## Run locally
@@ -49,7 +50,8 @@ Create a production frontend build with `npm run build` in `frontend/`; preview 
 ## API
 
 - `GET /api/health` — model readiness, device, and scale.
-- `POST /api/restore` — multipart form field `file` with JPEG, PNG, or WebP (up to 8 MB and 3 megapixels); returns an upscaled WebP image.
+- `POST /api/restore` — multipart form field `file` with JPEG, PNG, or WebP (up to 8 MB and 3 megapixels); returns an upscaled WebP image. Send an `X-Request-ID` UUID to track progress.
+- `GET /api/restore/progress/{request_id}` — percentage of model tiles completed for an active restoration request.
 
 Uploads are validated and processed for each request; the application does not persist the source or result images. The multipart framework may temporarily spool upload data before the endpoint closes it. The backend serializes inference to limit model memory use. Before public deployment, add suitable authentication or rate limiting and configure proxy request-size and timeout limits to accommodate image uploads and model inference.
 

@@ -1,12 +1,14 @@
 import asyncio
 import io
 import logging
+import math
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any, Callable
+from uuid import UUID
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from PIL import Image, UnidentifiedImageError
@@ -18,6 +20,37 @@ MAX_UPLOAD_BYTES = 8 * 1024 * 1024
 MAX_REQUEST_BYTES = MAX_UPLOAD_BYTES + 128 * 1024
 MAX_IMAGE_PIXELS = 3_000_000
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
+MODEL_PATCH_SIZE = 192
+MODEL_EDGE_PADDING = 15
+
+
+def predict_with_progress(
+    restorer: Any,
+    image: Image.Image,
+    batch_size: int,
+    on_progress: Callable[[int, int], None],
+) -> Image.Image:
+    model = getattr(restorer, "model", None)
+    if model is None:
+        return restorer.predict(image, batch_size=batch_size)
+
+    width, height = image.size
+    total_patches = math.ceil(
+        (height + MODEL_EDGE_PADDING * 2) / MODEL_PATCH_SIZE
+    ) * math.ceil((width + MODEL_EDGE_PADDING * 2) / MODEL_PATCH_SIZE)
+    completed_patches = 0
+
+    def report_batch(*hook_args: Any):
+        nonlocal completed_patches
+        inputs = hook_args[1]
+        completed_patches += inputs[0].shape[0]
+        on_progress(completed_patches, total_patches)
+
+    hook = model.register_forward_hook(report_batch)
+    try:
+        return restorer.predict(image, batch_size=batch_size)
+    finally:
+        hook.remove()
 
 
 class RequestBodyLimitMiddleware:
@@ -115,6 +148,7 @@ def load_restorer():
 async def lifespan(app: FastAPI):
     app.state.restorer, app.state.device = await run_in_threadpool(load_restorer)
     app.state.inference_lock = asyncio.Semaphore(1)
+    app.state.restoration_progress = {}
     yield
 
 
@@ -130,7 +164,7 @@ app.add_middleware(
         if origin.strip()
     ],
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "X-Request-ID"],
 )
 
 
@@ -142,6 +176,14 @@ async def health(request: Request):
         "scale": 4,
         "device": request.app.state.device,
     }
+
+
+@app.get("/api/restore/progress/{request_id}")
+async def restore_progress(request_id: UUID, request: Request):
+    progress = request.app.state.restoration_progress.get(str(request_id))
+    if progress is None:
+        raise HTTPException(status_code=404, detail="Restoration progress is unavailable.")
+    return {"progress": progress}
 
 
 def decode_image(data: bytes):
@@ -175,6 +217,7 @@ def decode_image(data: bytes):
 async def restore_image(
     request: Request,
     file: Annotated[UploadFile, File(description="JPEG, PNG, or WebP image")],
+    request_id: Annotated[UUID | None, Header(alias="X-Request-ID")] = None,
 ):
     data = await file.read(MAX_UPLOAD_BYTES + 1)
     await file.close()
@@ -185,11 +228,27 @@ async def restore_image(
 
     image = decode_image(data)
     try:
+        request_id_string = str(request_id) if request_id else None
+        if request_id_string:
+            request.app.state.restoration_progress[request_id_string] = 0
+        loop = asyncio.get_running_loop()
+
+        def update_progress(completed: int, total: int):
+            if request_id_string:
+                progress = min(99, int(completed / total * 100))
+                loop.call_soon_threadsafe(
+                    request.app.state.restoration_progress.__setitem__,
+                    request_id_string,
+                    progress,
+                )
+
         async with request.app.state.inference_lock:
             result = await run_in_threadpool(
-                request.app.state.restorer.predict,
+                predict_with_progress,
+                request.app.state.restorer,
                 image,
-                batch_size=1,
+                1,
+                update_progress,
             )
     except Exception as error:
         logger.exception("Real-ESRGAN inference failed")
@@ -197,6 +256,9 @@ async def restore_image(
             status_code=503,
             detail="Restoration failed. Please try again.",
         ) from error
+    finally:
+        if request_id:
+            request.app.state.restoration_progress.pop(str(request_id), None)
 
     output = io.BytesIO()
     result.save(output, format="WEBP", quality=90, method=4)

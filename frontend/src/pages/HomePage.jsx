@@ -41,6 +41,32 @@ export default function HomePage() {
   const [afterUrl, setAfterUrl] = useState(null);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [serviceDevice, setServiceDevice] = useState(null);
+  const [progress, setProgress] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/health")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Health check failed (HTTP ${response.status}).`);
+        }
+        return response.json();
+      })
+      .then((payload) => {
+        if (active && (payload.device === "cpu" || payload.device === "cuda")) {
+          setServiceDevice(payload.device);
+        }
+      })
+      .catch((error) => {
+        console.warn("Could not check restoration service health.", error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -61,6 +87,7 @@ export default function HomePage() {
 
     setBeforeUrl(null);
     setAfterUrl(null);
+    setProgress(null);
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setErrorMessage("Choose a JPEG, PNG, or WebP image.");
       setStatus("error");
@@ -73,13 +100,43 @@ export default function HomePage() {
     }
     setBeforeUrl(URL.createObjectURL(file));
     setErrorMessage("");
+    setProgress(0);
     setStatus("uploading");
+
+    const requestId = crypto.randomUUID();
+    const progressController = new AbortController();
+    const pollProgress = async () => {
+      while (!progressController.signal.aborted) {
+        try {
+          const progressResponse = await fetch(
+            `/api/restore/progress/${requestId}`,
+            { signal: progressController.signal },
+          );
+          if (progressResponse.ok) {
+            const payload = await progressResponse.json();
+            if (Number.isInteger(payload.progress)) {
+              setProgress(Math.max(0, Math.min(99, payload.progress)));
+            }
+          } else if (progressResponse.status !== 404) {
+            throw new Error(`Progress check failed (HTTP ${progressResponse.status}).`);
+          }
+        } catch (error) {
+          if (!progressController.signal.aborted) {
+            console.warn("Could not retrieve restoration progress.", error);
+          }
+          return;
+        }
+        await new Promise((resolve) => window.setTimeout(resolve, 500));
+      }
+    };
+    const progressPolling = pollProgress();
 
     try {
       const formData = new FormData();
       formData.append("file", file);
       const response = await fetch("/api/restore", {
         method: "POST",
+        headers: { "X-Request-ID": requestId },
         body: formData,
       });
 
@@ -98,18 +155,23 @@ export default function HomePage() {
         throw new Error("The restoration service returned an empty image.");
       }
       setAfterUrl(URL.createObjectURL(result));
+      setProgress(100);
       setStatus("success");
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "Restoration failed. Please try again.",
       );
       setStatus("error");
+    } finally {
+      progressController.abort();
+      await progressPolling;
     }
   };
 
   const startAnother = () => {
     setStatus("idle");
     setErrorMessage("");
+    setProgress(null);
     fileInputRef.current?.click();
   };
 
@@ -201,6 +263,12 @@ export default function HomePage() {
               Upload a JPEG, PNG, or WebP up to 8 MB. Photos are processed by
               the Revive server and are not kept after the request.
             </p>
+            {serviceDevice === "cpu" && (
+              <p className="restore-status" role="note">
+                This server is using CPU. Full-resolution restoration can take several
+                minutes; keep this page open. A CUDA-enabled server is faster.
+              </p>
+            )}
             <input
               accept={ACCEPTED_TYPES.join(",")}
               className="visually-hidden"
@@ -246,7 +314,27 @@ export default function HomePage() {
               </button>
             )}
             {status === "uploading" && (
-              <p aria-live="polite" className="restore-status">Uploading and restoring your photo…</p>
+              <div aria-live="polite" className="restore-progress">
+                <div className="restore-progress-label">
+                  <span>Restoring photo</span>
+                  <span>{progress ?? 0}%</span>
+                </div>
+                <div
+                  aria-label="Photo restoration progress"
+                  aria-valuemax={100}
+                  aria-valuemin={0}
+                  aria-valuenow={progress ?? 0}
+                  className="restore-progress-track"
+                  role="progressbar"
+                >
+                  <span style={{ width: `${progress ?? 0}%` }} />
+                </div>
+                <p className="restore-status">
+                  {serviceDevice === "cpu"
+                    ? "Full-resolution CPU processing can take several minutes. Keep this page open."
+                    : "Processing your photo…"}
+                </p>
+              </div>
             )}
             {status === "error" && (
               <p aria-live="assertive" className="restore-error" role="alert">{errorMessage}</p>
